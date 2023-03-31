@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaflet GeoJSON</title>
+    <!-- Internal CSS -->
+    <!-- <link rel="stylesheet" href="./index.css" crossorigin="" /> -->
+    <style>
+        .label-wilayah{
+            font-weight: 500;
+            color: black;
+        }
+        .container {
+            display: flex;
+        }
+
+        .container__sidebar {
+            width: 30%;
+        }
+
+        .container__main {
+            /* Take the remaining width */
+            flex: 1;
+
+            /* Make it scrollable */
+            overflow: auto;
+        }
+
+        #map {
+            height: 100vh;
+        }
+
+        .btnMap {
+            color: #85acff;
+            border: 2px solid rgb(56, 3, 202);
+            border-radius: 10px;
+            margin: auto;
+            background-color: white;
+            font-size: 20px;
+            padding: 10px;
+        }
+
+        .btnMap:focus {
+            background-color: #85acff;
+            color: white;
+        }
+    </style>
+    <!-- Leaflet JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+        integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+        crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+        integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+        crossorigin=""></script>
+    <!-- Leaflet_plugin.locate -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/leaflet.locatecontrol@0.74.0/dist/L.Control.Locate.min.css" />
+    <!-- Leaflet_plugin.measure -->
+    <script src="./leaflet-measure/src/leaflet-measure.js"></script>
+    <link rel="stylesheet" href="leaflet-measure/src/css/leaflet-measure.css">
+    <!-- Leaflet_plugin.geocoder -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+    <!-- Leaflet_plugin.search -->
+    <link rel="stylesheet" href="leaflet-search-master/dist/leaflet-search.min.css">
+    <!-- Leaflet_plugin.routing-machine -->
+    <link rel="stylesheet" href="leaflet-routing-machine/dist/leaflet-routing-machine.css">
+    <!-- <link rel="stylesheet" href="leaflet-routing-machine.css" /> -->
+</head>
+
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="container__sidebar">
+            <h1>Taufiq Ahmad Maulana</h1>
+            <p>119140152</p>
+            <p>Ujian Tengah Semester</p>
+            <p>Sistem Informasi Geografis</p>
+        </aside>
+
+        <!-- Main -->
+        <main class="container__main">
+            <div id="map"></div>
+        </main>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet.locatecontrol@0.74.0/dist/L.Control.Locate.min.js"
+        charset="utf-8"></script>
+    <!-- leaflet-ajax -->
+    <script src="./leaflet-ajax/leaflet.ajax.js"></script>
+    <!-- leaflet-search -->
+    <script src="./leaflet-search-master/dist/leaflet-search.min.js"></script>
+    <!-- leaflet-routing-machine -->
+    <script src="./leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
+    <!-- <script src="leaflet-routing-machine.js"></script> -->
+    <script src="./leaflet-routing-machine/src/Control-Geocoder.js"></script>
+    <script src="./pendidikan-balam.js"></script>
+    <script src="./bataswilayah.js"></script>
+    <script>
+        // var map = L.map('map').setView([51.505, -0.09], 13);
+        var mymap = L.map('map', { measureControl: true }).setView([-5.359013097988684, 105.3162449826625], 15);
+
+        L.tileLayer('https://tile.openstree', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(mymap);
+
+        // L.marker([51.5, -0.09]).addTo(mymap)
+        //     .bindPopup('A pretty CSS3 popup.<br> Easily customizable.')
+        //     .openPopup();
+
+        L.Control.geocoder().addTo(mymap);
+
+        var markersLayer = new L.LayerGroup();	//layer contain searched elements
+
+        mymap.addLayer(markersLayer);
+
+        var controlSearch = new L.Control.Search({
+            position: 'topleft',
+            layer: markersLayer,
+            initial: false,
+            hideMarkerOnCollapse: true,
+            textPlaceholder: 'Masukkan Nama Sekolah',
+            zoom: 20,
+        });
+
+        mymap.addControl(controlSearch);
+
+
+        var sitis = L.geoJSON(batasWilayah, {
+            onEachFeature: function (feature, layer) {
+                var label = L.marker(layer.getBounds().getCenter(), {
+                    icon: L.divIcon({
+                        className: 'label-wilayah',
+                        html: feature.properties.NAMOBJ,
+                        iconSize: [100, 40]
+                    })
+                }).addTo(mymap);
+            }
+        })
+            .addTo(mymap);
+
+
+        for (i in balam[0].features) {
+            var title = balam[0].features[i].properties.NAMOBJ,	//value searched
+                loc = balam[0].features[i].geometry.coordinates,		//position found
+                marker = new L.Marker(new L.latLng(loc), { title: title });//se property searched
+            marker.bindPopup('<h3><b>' + title + '</b></h3>\n' +
+                '<h4>' + balam[0].features[i].properties.REMARK +
+                "</h4><button onclick='return kesini(" + balam[0].features[i].geometry.coordinates[0] + ',' + balam[0].features[i].geometry.coordinates[1] + ")' class='btnMap'>Rute Kesini</button>");
+            markersLayer.addLayer(marker);
+        }
+
+        var control = L.Routing.control({
+            waypoints: [
+                L.latLng(-5.359013097988684, 105.3162449826625),
+                L.latLng(57.6792, 11.949)
+            ],
+            geocoder: L.Control.Geocoder.nominatim(),
+            routeWhileDragging: true,
+            reverseWaypoints: true,
+            showAlternatives: true,
+        }).addTo(mymap);
+
+        function kesini(lat, lng) {
+            console.log(lat, lng)
+            var latlng = L.latLng(lat, lng)
+            control.spliceWaypoints(control.getWaypoints().length - 1, 1, latlng);
+        }
+        L.control.locate({
+            strings: {
+                title: "Lokasi Saya"
+            },
+        }).addTo(mymap);
+
+        L.Control.Measure().addTo(mymap);
+
+    </script>
+</body>
+
+</html>
